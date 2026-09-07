@@ -1,12 +1,14 @@
 ---
 name: ui-design-spec
-description: Turn a UI design mockup/截图/设计稿 into a precise, implementable frontend specification. Use this skill when the user提供了设计稿/图片/UI 图, asks to 分析界面、生成前端规范、把设计转成可落地代码, or needs a structured report covering layout (flex/grid), responsive strategy (rem vs vw/vh vs px vs clamp), forms, tables, design tokens (colors/typography/spacing/radius/shadow), component breakdown, scroll behavior, and text-overflow handling. Works for both 后台/中后台 (admin, dashboard, Ant Design style) and C端 (marketing, landing, feed) interfaces. Core style is question-driven: keep asking the user targeted questions to converge on what the report should emphasize, instead of dumping a fixed template. Use this skill when the user wants the analysis direction to be steered by their answers.
+description: 把 UI 设计稿（图片/截图/Figma/蓝湖等设计稿链接）转成可实施的前端规范：布局(flex/grid)、响应式单位(rem/vw·vh/clamp)、表单、表格、设计 token、组件拆分、滚动与文字超长处理。提问驱动，先收敛方向再定向深挖。当用户给设计稿/截图/链接、要求「分析界面/生成前端规范/复刻界面/把设计转成代码」时使用。
+version: 1.1.0
+tags: [ui, design, frontend, spec]
 license: Complete terms in LICENSE.txt
 ---
 
 # UI Design Spec — 设计稿 → 可实施前端规范（提问驱动）
 
-把一张设计稿（截图/图片/蓝湖/Figma 导出）转成**前端能直接照着写代码的规范**。核心思路：不是"好看就行"，而是把每一项落到**可量化、可复用的 token 和决策**上。
+把一张设计稿（截图/图片/蓝湖/Figma 导出/**设计稿链接**）转成**前端能直接照着写代码的规范**。核心思路：不是"好看就行"，而是把每一项落到**可量化、可复用的 token 和决策**上。
 
 **适用场景**：用户给 UI 图/设计稿，要求分析、生成前端规范、复刻界面、拆组件、定响应式方案。**不适用**：纯创意构思、无需落地的脑暴。
 
@@ -15,9 +17,10 @@ license: Complete terms in LICENSE.txt
 
 ---
 
-## 工作流总览（5 步：问 → 判 → 深挖 → 补问 → 定稿）
+## 工作流总览（6 步：读图 → 问 → 判 → 深挖 → 补问 → 定稿）
 
 ```
+[0] 获取设计稿   —— 图片 or 链接；优先尝试读设计稿链接，读不全则回退让用户给截图/切图
 [1] 冷启动提问   —— 一次性抛出一组基础问题（类型/响应式[A]/宽高[B]/视口[C]/目标/重点/环境）
 [2] 类型判定      —— 从答案映射到「决策矩阵」，得到默认倾向
 [3] 定向深挖      —— 只对用户圈定的板块逐项输出（其余「略过」）
@@ -30,6 +33,22 @@ license: Complete terms in LICENSE.txt
 - **问题要有选项**（给出默认推荐项），别问开放式大而全的问题。
 - **用户的回答决定输出方向**，不是反过来让输出决定一切。宁可少覆盖、也要覆盖对。
 - **不确定的/设计稿看不到的**（校验态、数据规模、断点、组件库）→ 通过补问让用户定，而不是我自己拍。
+
+---
+
+## 第 0 步：获取并读取设计稿（图片 or 链接）
+
+先确认设计稿输入形态，再决定怎么读。**没图没链接就先要，别空跑。**
+
+**输入形态与处理**：
+1. **图片/截图**（PNG/JPG/WebP）→ 直接读图（需要多模态读图能力）。
+2. **设计稿链接**（Figma / 蓝湖 / 即时设计 / Zeplin / Sketch Cloud / 飞书设计 等）：
+   - **优先尝试直接读链接**：用网页抓取（web_fetch）访问公开分享链接，能拿到什么算什么——缩略图、frame/页面名、标注的颜色/字号/间距、可下载切图。
+   - **现实约束（必须如实告知用户）**：Figma/蓝湖等工具通常需登录或 API Token 才能读完整设计数据；agent 从公开链接往往只能拿到**缩略图 + 部分元数据**，拿不到精确图层尺寸/颜色/间距。**读不到就明说缺什么，不能假装读到了。**
+   - **回退策略**（链接读不全时，请用户二选一或都补）：①导出 PNG/JPG 截图；②导出设计 token（CSS/JSON）；③提供标注截图（标尺寸/颜色/间距）。拿到后回到图片流程。
+3. **多张/多状态**：确认是否有多个视口（桌面/平板/移动）或交互状态（hover/错误/空态）——通常分散在多张图或链接的多个 frame，需逐张读取。
+
+**读完后先复述**：用 2–3 句话概括「什么界面、几个区域、什么风格」，让用户确认没读错，再进入冷启动提问。
 
 ---
 
@@ -58,10 +77,18 @@ license: Complete terms in LICENSE.txt
 6. **你最关心哪几块**（可多选）：
    - 布局(flex/grid) │ 响应式单位 │ 表单 │ 表格 │ 卡片/组件拆分 │ 滚动/超长处理 │ 配色/token │ 其他
    - **这就是「定向深挖」的圈定范围**，只对这些深挖，其余略过。
-6. **工程环境**：UI 库(AntD?/Element?/自定义) │ 框架(Vue3/React/原生) │ 目标最小宽度 │ 是否需随屏放大文字
+7. **工程环境**：UI 库(AntD?/Element?/自定义) │ 框架(Vue3/React/原生) │ 目标最小宽度 │ 是否需随屏放大文字
    - 决定 token 注入方式、断点、组件拆分方式、单位选型。
 
-> 如果用户不想答全部，至少确认 **[A] 响应式策略 + [B] 最小/最大宽高 + [C] 视口范围 + 最关心的板块** 这四个，其余用默认。
+> 如果用户不想答全部，至少确认 **[A] 响应式策略 + [B] 最小/最大宽高 + [C] 视口范围 + 最关心的板块]** 这四个，其余按下表默认，并在定稿报告里标注「该项采用默认值，可改」：
+>
+> | 未答项 | 默认值 |
+> |---|---|
+> | 界面类型 | 后台/中后台 |
+> | 交付目标 | 只出分析报告（不落盘） |
+> | 工程环境 | 无 UI 库；框架未指定时反问问一句再定 |
+> | 是否随屏放大文字 | 否（文字/间距用 rem） |
+> | 目标最小宽度 | 桌面 1280（低于折叠侧栏/列数） |
 
 ---
 
@@ -126,7 +153,7 @@ license: Complete terms in LICENSE.txt
 - **只设最大** → 给 `max-width`：超宽屏内容区 `max-width:1600px` 居中防拉长。
 - **都设** → 以上两组都给，容器用 `minmax()` / `clamp()` 表达区间。
 - **都不设** → 纯自适应或纯流式，不给硬性 min/max（此时改用 `clamp()` 保证不塌陷/不拉长）。
-- **高度**：后台 `100vh`；营销页可随内容流。**结合 [B] 是否固定高度一起给。**
+- **高度**：后台 `100vh`（移动端地址栏抖动场景建议 `100dvh` 或 `min-height:100svh`）；营销页可随内容流。**结合 [B] 是否固定高度一起给。**
 
 > ⚠️ 不要因为"它是后台"就默认必设 min/max——以用户 [B] 的回答为准。
 
@@ -160,7 +187,7 @@ license: Complete terms in LICENSE.txt
 - 标出**页面级私有** vs **全局可复用**。
 
 ### ⑦ 设计 Token（全量，除颜色/字体外）
-- **颜色**：主/辅/语义(成功·警告·危险·信息)/中性/背景/边框。**务必像素采样给精确 `#HEX`**，不是估值。
+- **颜色**：主/辅/语义(成功·警告·危险·信息)/中性/背景/边框。**尽量精确采样给 `#HEX`**；采样值受截图压缩/色偏影响可能有偏差——把颜色值列入「待确认项」，请用户与设计稿 token 核对，不要宣称「无估值」。
 - **字体**：font-family（中文用系统 CJK 体）、字号层级、字重、行高。
 - **圆角** `--radius-sm 4 / md 8 / lg 12`；**阴影** `--shadow-card 0 2px 8px rgba(0,0,0,.06)`；**间距** `--space 4/8/12/16/24/32`；**z-index** 层级。
 
@@ -246,6 +273,8 @@ license: Complete terms in LICENSE.txt
 
 > 说明：`title`（原生 tooltip）成本最低但样式不可控；自定义 `Tooltip` 组件样式可控但更重。把这两个取舍告诉用户，让其决定，不替用户选。
 
+> **⚠️ 坑（flex/grid 里省略号失效）**：Flex/Grid 子项默认 `min-width:auto`，会阻止收缩导致 `text-overflow:ellipsis` 不生效。给发生省略的容器加 `min-width:0`（纵向同理 `min-height:0`）。
+
 ### ⑭ 可能超长的元素清单 + **逐项询问**
 逐项列出可能超长的元素、优先级，并**对每个标星 ⭐ 的元素显式询问用户处理方式**（方案见 ⑬）。
 - 目标元素（标题/描述/多行文本/列表项/菜单/面包屑/按钮/tabs/pills/计数 like"9999+"等）。
@@ -287,8 +316,20 @@ license: Complete terms in LICENSE.txt
    - 或一份 `DESIGN.md`（可编辑、可进项目、可跨工具迁移）
    - 落盘后，报告里注明"已生成 <路径>"。
 
+**示例输出（节选，一张「课程卡片」）**：
+```
+# 课程卡片 · 规范节选
+- Token：卡片圆角 --radius-md:8px；阴影 --shadow-card:0 2px 8px rgba(0,0,0,.06)；间距 --space:8/16
+- 结构：卡片 = 封面图(顶) + 标题 + 标签行 + 底部(价格 + 按钮)
+- 封面：aspect-ratio:16/9 + object-fit:cover
+- 标题：line-clamp:2；待确认：是否加 Tooltip 显示全文（默认建议加）
+- 响应式：[A]=固定+弹性；卡片列 minmax(280px,1fr)，3列→2列→1列
+- 状态机：default / hover(阴影加深) / 加载骨架屏 / 空态占位
+- 待确认：①颜色 #3B82F6 为截图采样值，请核对 ②价格数字是否右对齐
+```
+
 ### 产出质量自检清单（定稿前逐项打勾，缺项补问/补齐）
-- [ ] 所有颜色 **像素采样** 给出精确 `#HEX`（无估值）。
+- [ ] 所有颜色 **尽量精确采样** 给出 `#HEX`，并已标注「采样值可能有偏差，待用户核对」。
 - [ ] 字体字号/字重/行高已成表。
 - [ ] 文字**超长**的每处都问过：换行/单行省略/几行 clamp？单行省略是否加 `title`/`Tooltip`？
 - [ ] 图片**每类**都问过：固定宽高 vs 宽高比(几比几)、`object-fit`、头像是否圆形裁切？
@@ -308,7 +349,8 @@ license: Complete terms in LICENSE.txt
 ## 可复用的决策矩阵速查（随 Skill 附带）
 
 ```
-0. 工作方式  提问驱动：先问→定向深挖→边问边定→汇总。一次问1-3个，带推荐选项。
+0. 工作方式  6步：读图/链接→问→判定→深挖→补问→定稿。一次问1-3个，带推荐选项。
+   读图：优先读设计稿链接(web_fetch)，读不全回退要截图/切图；读后先复述确认。
 1. 类型？    后台 → flex/grid + px/rem, 不用vw; 动效克制
              C端  → vw/vh + clamp(), 可大胆动效
           ⚠️ 类型只是背景参考，不直接决定单位。
@@ -323,13 +365,14 @@ license: Complete terms in LICENSE.txt
 3. 布局？    单轴 → Flex; 多列独立区 → Grid
 4. 宽度？    min-width(侧栏/每列/页面); 可选 max-width(超宽防拉长)
 5. 滚动？    元素可能多 → 【必问】容器内滚动 vs 随内容延伸, 并告知影响
-             容器内 → html/body 100vh; 各列 min-height:0; overflow-y:auto; 整页不滚
+             容器内 → html/body 100vh(移动端100dvh); 各列 min-height:0; overflow-y:auto; 整页不滚
              延伸   → body 被撑高整页滚; header 用 sticky
              ⚠️ 告知: 容器内滚动可能出现"外层+内层"多滚动条; 长内容用虚拟滚动
              ⚠️ 不同区域可不同策略, 不要一刀切
 6. 超长？    判断有超长风险 → 【必问】处理方式(换行/单行省略/几行clamp/是否tooltip)
              方案: short→单行省略(+可tooltip); long title→2行clamp; pills排不下→横滚
              ⚠️ 单行省略必须问用户是否加 title/Tooltip 展示全文
+              ⚠️ flex/grid 里省略号失效 → 给容器 min-width:0
 7. 图片？    出现图片/缩略图/头像 → 【必问】固定宽高 vs 保持宽高比(几比几)
              方案: 封面→aspect-ratio 16/9+cover; 头像→固定+cover+圆形裁切
              ⚠️ 必须问 object-fit(cover/contain/fill) 与是否圆形裁切
@@ -337,7 +380,7 @@ license: Complete terms in LICENSE.txt
              方案: 文本列弹性+min-width; 数字列固定+右对齐; 操作列固定+sticky right
              ⚠️ 告知: 固定列+横向滚动会出现横向滚动条; 列宽弹性随内容变
 9. 状态？    每组件补 default/hover/focus/disabled/loading/空/错误/选中
-10. token？  全部像素采样给精确 #HEX; 配色/字体/圆角/阴影/间距/z-index 一表
+10. token？  尽量精确采样给 #HEX(采样偏差待核对); 配色/字体/圆角/阴影/间距/z-index 一表
 11. 产物？   可选落盘: tokens.css / tokens.scss / design-tokens.json / DESIGN.md
              ⚠️ 不只是会话文本, 而是项目内可复用文件
 12. 自检？   定稿前过一遍质量 checklist(token、超长、图片、滚动、表格、响应式、断点、组件树、状态机) 逐项打勾
